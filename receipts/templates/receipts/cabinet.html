@@ -1,0 +1,124 @@
+{% extends "receipts/base.html" %}
+{% load static %}
+
+{% block title %}Личный кабинет — Чек на удачу{% endblock %}
+
+{% block content %}
+<div class="card card--cabinet">
+  <div class="cabinet__header">
+    <h1>История чеков</h1>
+    <span class="pill">Чеков внесено: <strong>{{ total_count }} шт.</strong></span>
+  </div>
+
+  {% if receipts %}
+    <form method="get" class="mobile-sort" data-mobile-sort>
+      <label class="field">
+        <span class="field__label">Сортировка</span>
+        <select name="ordering">
+          {% for column in sort_columns %}
+            <option value="{{ column.field }}" {% if column.active %}selected{% endif %}>
+              {{ column.label }}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+      <noscript><button type="submit" class="button button--secondary">Применить</button></noscript>
+    </form>
+
+    <table class="receipts-table">
+      <thead>
+        <tr>
+          {% for column in sort_columns %}
+            <th>
+              <a
+                href="?ordering={{ column.ordering }}"
+                class="sort-link {% if column.active %}sort-link--active{% endif %}"
+              >
+                {{ column.label }}{% if column.direction == "asc" %} ▲{% elif column.direction == "desc" %} ▼{% endif %}
+              </a>
+            </th>
+          {% endfor %}
+          <th>Информация</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in receipts %}
+          <tr>
+            <td class="cell cell--purchase" data-label="Дата покупки">
+              {% if item.receipt.photo_thumb %}
+                <img src="{{ item.receipt.photo_thumb.url }}" alt="" class="receipt-thumb">
+              {% else %}
+                <img src="{% static 'receipts/icons/qr.svg' %}" alt="" class="receipt-thumb receipt-thumb--icon">
+              {% endif %}
+              {{ item.receipt.purchased_at|date:"H:i d.m.Y" }}
+            </td>
+            <td class="cell" data-label="Статус">
+              <span class="badge {{ item.badge_modifier }}">
+                {% if item.receipt.status == "won" %}
+                  <img src="{% static 'receipts/icons/gift.svg' %}" alt="" class="icon icon--sm">
+                {% else %}
+                  <span class="badge__dot"></span>
+                {% endif %}
+                {{ item.badge_label }}
+              </span>
+            </td>
+            <td class="cell" data-label="Сумма чека">
+              <img src="{% static 'receipts/icons/money.svg' %}" alt="" class="icon icon--muted">
+              {{ item.amount_display }} ₽
+            </td>
+            <td class="cell" data-label="Дата регистрации">
+              <img src="{% static 'receipts/icons/calendar.svg' %}" alt="" class="icon icon--muted">
+              {{ item.receipt.created_at|date:"d.m.Y" }}
+            </td>
+            <td class="cell cell--info" data-label="Информация">
+              {% if item.info %}
+                <img src="{% static 'receipts/icons/info.svg' %}" alt="" class="icon icon--muted">
+                {{ item.info }}
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+      <nav class="pagination" aria-label="Пагинация">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}&ordering={{ ordering }}" class="pagination__arrow">‹</a>
+        {% endif %}
+        {% for number in elided_pages %}
+          {% if number == page_obj.paginator.ELLIPSIS %}
+            <span class="pagination__ellipsis">…</span>
+          {% else %}
+            <a
+              href="?page={{ number }}&ordering={{ ordering }}"
+              class="pagination__page {% if number == page_obj.number %}pagination__page--active{% endif %}"
+            >
+              {{ number }}
+            </a>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}&ordering={{ ordering }}" class="pagination__arrow">›</a>
+        {% endif %}
+      </nav>
+    {% endif %}
+
+    <div class="cabinet__footer">
+      <p class="cabinet__hint">Иногда проверка вашего чека может занять до 5 рабочих дней</p>
+      <a href="{% url 'receipts:receipt-form' %}" class="button button--primary">Зарегистрировать чек</a>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <img src="{% static 'receipts/icons/empty-receipts.svg' %}" alt="" class="empty-state__image">
+      <h2>Здесь будет история ваших чеков</h2>
+      <p>Вы не добавили еще ни одного чека</p>
+      <a href="{% url 'receipts:receipt-form' %}" class="button button--primary">Зарегистрировать чек</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  <script type="module" src="{% static 'receipts/js/cabinet-sort.js' %}"></script>
+{% endblock %}

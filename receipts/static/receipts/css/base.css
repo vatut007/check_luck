@@ -368,6 +368,186 @@ input[type="file"] {
   gap: 12px;
 }
 
+/* ---------- Личный кабинет ---------- */
+
+.card--cabinet {
+  max-width: 1024px;
+}
+
+.cabinet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.cabinet__header h1 {
+  margin: 0;
+}
+
+.pill {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  padding: 8px 16px;
+  border-radius: var(--radius-badge);
+  font-size: 14px;
+}
+
+.mobile-sort {
+  display: none;
+}
+
+.receipts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.receipts-table thead th {
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+  padding: 12px;
+}
+
+.sort-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.sort-link--active {
+  color: var(--color-primary);
+}
+
+.receipts-table .cell {
+  padding: 12px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.receipts-table .cell--info {
+  white-space: normal;
+}
+
+.receipt-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.receipt-thumb--icon {
+  padding: 6px;
+  background: var(--color-surface-muted);
+}
+
+.icon--muted {
+  opacity: 0.7;
+  vertical-align: middle;
+  margin-right: 6px;
+  display: inline-block;
+}
+
+.icon--sm {
+  width: 14px;
+  height: 14px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-badge);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badge--pending {
+  background: var(--color-warning-soft);
+  color: #8a6d13;
+}
+
+.badge--accepted {
+  background: var(--color-success-soft);
+  color: #1f7a0f;
+}
+
+.badge--rejected {
+  background: var(--color-error-soft);
+  color: var(--color-error);
+}
+
+.badge--won {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 24px;
+}
+
+.pagination__page,
+.pagination__arrow,
+.pagination__ellipsis {
+  min-width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-input);
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.pagination__page--active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.cabinet__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.cabinet__hint {
+  color: var(--color-placeholder);
+  font-size: 13px;
+  margin: 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 16px;
+}
+
+.empty-state__image {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 16px;
+}
+
 /* ---------- Мобильная версия (до 768px) ---------- */
 
 @media (max-width: 768px) {
@@ -404,5 +584,52 @@ input[type="file"] {
   .card {
     padding: 16px;
     border-radius: 16px;
+  }
+
+  .mobile-sort {
+    display: block;
+    margin-bottom: 16px;
+  }
+
+  .receipts-table thead {
+    display: none;
+  }
+
+  .receipts-table,
+  .receipts-table tbody,
+  .receipts-table tr,
+  .receipts-table .cell {
+    display: block;
+    width: 100%;
+  }
+
+  .receipts-table tr {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    margin-bottom: 12px;
+    padding: 12px;
+  }
+
+  .receipts-table .cell {
+    border-bottom: none;
+    padding: 4px 0;
+    white-space: normal;
+  }
+
+  .receipts-table .cell::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 12px;
+    color: var(--color-placeholder);
+    margin-bottom: 2px;
+  }
+
+  .cabinet__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cabinet__footer .button {
+    width: 100%;
   }
 }

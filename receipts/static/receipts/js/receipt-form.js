@@ -126,7 +126,7 @@ function showSuccessScreen(form, config) {
         Проверка чека может занять до 5 рабочих дней. Мы сообщим о результате в личном кабинете.
       </p>
       <div class="success-screen__actions">
-        <a href="${config.homeUrl}" class="button button--primary button--full">В личный кабинет</a>
+        <a href="${config.cabinetUrl}" class="button button--primary button--full">В личный кабинет</a>
         <a href="${config.formUrl}" class="button button--secondary button--full">Зарегистрировать ещё</a>
       </div>
     </div>

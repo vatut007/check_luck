@@ -9,7 +9,12 @@
   </div>
 
   <nav class="header__nav">
-    <a href="#" class="header__nav-link header__nav-link--active">Личный кабинет</a>
+    <a
+      href="{% url 'receipts:cabinet' %}"
+      class="header__nav-link {% if request.resolver_match.url_name == 'cabinet' %}header__nav-link--active{% endif %}"
+    >
+      Личный кабинет
+    </a>
     <a href="#" class="header__nav-link">Правила</a>
     <a href="#" class="header__nav-link">Профиль</a>
   </nav>

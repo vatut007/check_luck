@@ -14,7 +14,7 @@
           Проверка чека может занять до 5 рабочих дней. Мы сообщим о результате в личном кабинете.
         </p>
         <div class="success-screen__actions">
-          <a href="{% url 'receipts:home' %}" class="button button--primary button--full">В личный кабинет</a>
+          <a href="{% url 'receipts:cabinet' %}" class="button button--primary button--full">В личный кабинет</a>
           <a href="{% url 'receipts:receipt-form' %}" class="button button--secondary button--full">
             Зарегистрировать ещё
           </a>
@@ -23,7 +23,7 @@
     </div>
   {% else %}
     <div class="card card--form">
-      <a href="{% url 'receipts:home' %}" class="card__close" aria-label="В кабинет">&times;</a>
+      <a href="{% url 'receipts:cabinet' %}" class="card__close" aria-label="В кабинет">&times;</a>
       <h1>Регистрация чека</h1>
       <p class="card__subtitle">Введите необходимые данные с чека</p>
       <p class="promo-period">
@@ -132,7 +132,7 @@
     {
       "promoUrl": "{% url 'receipts_api:promo-config' %}",
       "receiptsUrl": "{% url 'receipts_api:receipt-list-create' %}",
-      "homeUrl": "{% url 'receipts:home' %}",
+      "cabinetUrl": "{% url 'receipts:cabinet' %}",
       "formUrl": "{% url 'receipts:receipt-form' %}",
       "checkIconUrl": "{% static 'receipts/icons/check.svg' %}",
       "dangerIconUrl": "{% static 'receipts/icons/danger.svg' %}"
