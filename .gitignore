@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Проект: медиа и собранная статика не хранятся в репозитории
+/media/
+/staticfiles/
