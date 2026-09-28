@@ -35,7 +35,7 @@
         <div class="form-error">{{ errors.general }}</div>
       {% endif %}
 
-      <form method="post" enctype="multipart/form-data" novalidate>
+      <form method="post" enctype="multipart/form-data" novalidate data-receipt-form>
         {% csrf_token %}
 
         <label class="field {% if errors.fn %}field--error{% endif %}">
@@ -125,4 +125,18 @@
     </div>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script id="receipt-form-config" type="application/json">
+    {
+      "promoUrl": "{% url 'receipts_api:promo-config' %}",
+      "receiptsUrl": "{% url 'receipts_api:receipt-list-create' %}",
+      "homeUrl": "{% url 'receipts:home' %}",
+      "formUrl": "{% url 'receipts:receipt-form' %}",
+      "checkIconUrl": "{% static 'receipts/icons/check.svg' %}",
+      "dangerIconUrl": "{% static 'receipts/icons/danger.svg' %}"
+    }
+  </script>
+  <script type="module" src="{% static 'receipts/js/receipt-form.js' %}"></script>
 {% endblock %}

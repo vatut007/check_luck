@@ -336,6 +336,11 @@ input::placeholder {
   margin-bottom: 16px;
 }
 
+.form-error--warning {
+  background: var(--color-warning-soft);
+  color: #8a6d13;
+}
+
 input[type="file"] {
   width: 100%;
   font: inherit;
