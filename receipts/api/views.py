@@ -1,0 +1,56 @@
+from django.conf import settings
+from drf_spectacular.utils import extend_schema
+from rest_framework import generics, status
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.views import APIView
+
+from receipts import selectors
+from receipts.api.serializers import PromoConfigSerializer, ReceiptSerializer
+
+
+class ReceiptListCreateView(generics.ListCreateAPIView):
+    serializer_class = ReceiptSerializer
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    throttle_scope = "receipts-write"
+
+    def get_queryset(self):
+        # Всегда только чеки текущего пользователя — параметры запроса
+        # (?user=, ?user_id=, ?id=...) на выбор пользователя не влияют.
+        return selectors.receipts_for_user(
+            self.request.user, ordering=self.request.query_params.get("ordering")
+        )
+
+    def get_throttles(self):
+        if self.request.method == "POST":
+            return [ScopedRateThrottle()]
+        return []
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        created = getattr(serializer, "created", True)
+        code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        return Response(serializer.data, status=code)
+
+
+class PromoConfigView(APIView):
+    """Правила акции для фронта — единый источник вместо констант в шаблонах и JS."""
+
+    @extend_schema(responses=PromoConfigSerializer)
+    def get(self, request):
+        promo = settings.PROMO
+        return Response(
+            {
+                "start_date": promo.start_date.isoformat(),
+                "end_date": promo.end_date.isoformat(),
+                "timezone": promo.tz_name,
+                "min_amount": str(promo.min_amount),
+                "fn_length": 16,
+                "fd_max_length": 10,
+                "fp_max_length": 10,
+                "photo_max_mb": promo.photo_max_mb,
+            }
+        )

@@ -150,6 +150,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "receipts-write": "20/min",
     },
+    "EXCEPTION_HANDLER": "receipts.api.exceptions.exception_handler",
 }
 
 SPECTACULAR_SETTINGS = {
