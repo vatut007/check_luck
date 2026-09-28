@@ -1,0 +1,25 @@
+{% load static %}<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Чек на удачу{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700&family=Mulish:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="{% static 'receipts/css/tokens.css' %}">
+  <link rel="stylesheet" href="{% static 'receipts/css/base.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  {% include "receipts/_header.html" %}
+  <main class="page">
+    {% block content %}{% endblock %}
+  </main>
+  <script type="module" src="{% static 'receipts/js/header.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,25 @@
+:root {
+  --color-primary: #524fe5;
+  --color-primary-soft: rgba(82, 79, 229, 0.08);
+  --color-heading: #182133;
+  --color-text: #3e4552;
+  --color-placeholder: #a2a9b8;
+  --color-border: #e6e8f0;
+  --color-surface-muted: #f5f7fa;
+  --color-page-bg: #f5f6fa;
+  --color-error: #f04d4d;
+  --color-error-soft: rgba(240, 77, 77, 0.12);
+  --color-success: #37cd1a;
+  --color-success-soft: rgba(55, 205, 26, 0.12);
+  --color-warning: #ebb917;
+  --color-warning-soft: rgba(235, 185, 23, 0.12);
+
+  --radius-card: 24px;
+  --radius-input: 10px;
+  --radius-button: 12px;
+  --radius-badge: 18px;
+
+  /* Google Sans недоступен в Google Fonts — заменён на Manrope (см. README). */
+  --font-heading: "Manrope", sans-serif;
+  --font-body: "Mulish", sans-serif;
+}

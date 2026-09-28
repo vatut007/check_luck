@@ -1,0 +1,326 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-page-bg);
+  color: var(--color-text);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  color: var(--color-heading);
+  margin: 0 0 16px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img.icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+/* ---------- Шапка ---------- */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 12px 32px;
+  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+  position: relative;
+}
+
+.header__left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header__logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--color-border);
+}
+
+.header__back-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.header__nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.header__nav-link {
+  padding: 8px 16px;
+  border-radius: var(--radius-badge);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.header__nav-link--active {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.header__right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header__icon-button {
+  border: none;
+  background: none;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: var(--radius-badge);
+}
+
+.header__icon-button:hover {
+  background: var(--color-surface-muted);
+}
+
+.header__user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  position: relative;
+  padding: 4px 8px;
+  border-radius: var(--radius-badge);
+  border: none;
+  background: none;
+  font: inherit;
+}
+
+.header__user:hover {
+  background: var(--color-surface-muted);
+}
+
+.header__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.header__user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.header__user-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-heading);
+}
+
+.header__user-email {
+  font-size: 12px;
+  color: var(--color-placeholder);
+}
+
+.header__dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  box-shadow: 0 8px 24px rgba(24, 33, 51, 0.12);
+  min-width: 180px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 10;
+}
+
+.header__dropdown-item {
+  padding: 8px 12px;
+  border-radius: var(--radius-input);
+  font-size: 14px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+}
+
+.header__dropdown-item:hover {
+  background: var(--color-surface-muted);
+}
+
+.header__logout-form {
+  padding: 0;
+}
+
+.header__burger {
+  display: none;
+  border: none;
+  background: none;
+  padding: 8px;
+  cursor: pointer;
+}
+
+/* ---------- Общие компоненты ---------- */
+
+.page {
+  padding: 32px;
+}
+
+.page-center {
+  display: flex;
+  justify-content: center;
+  padding: 64px 16px;
+}
+
+.card {
+  background: #fff;
+  border-radius: var(--radius-card);
+  padding: 32px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.card--narrow {
+  max-width: 400px;
+}
+
+.field {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.field__label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="datetime-local"],
+textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  font: inherit;
+  color: var(--color-text);
+}
+
+input::placeholder {
+  color: var(--color-placeholder);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-button);
+  font-weight: 600;
+  font-size: 16px;
+  padding: 14px 24px;
+  cursor: pointer;
+}
+
+.button--primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.button--full {
+  width: 100%;
+}
+
+.form-error {
+  background: var(--color-error-soft);
+  color: var(--color-error);
+  padding: 12px 16px;
+  border-radius: var(--radius-input);
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* ---------- Мобильная версия (до 768px) ---------- */
+
+@media (max-width: 768px) {
+  .header__nav {
+    display: none;
+  }
+
+  .header__user-info {
+    display: none;
+  }
+
+  .header__burger {
+    display: block;
+  }
+
+  .header--menu-open .header__nav {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-bottom: 1px solid var(--color-border);
+    padding: 16px;
+    gap: 8px;
+  }
+
+  .page {
+    padding: 16px;
+  }
+
+  .card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+}

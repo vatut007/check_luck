@@ -135,7 +135,8 @@ CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SECURE = SECURE_COOKIES
 
 LOGIN_URL = "login"
-LOGIN_REDIRECT_URL = "receipts:cabinet"
+# TODO(шаг 10): переключить на "receipts:cabinet", когда появится кабинет.
+LOGIN_REDIRECT_URL = "receipts:home"
 LOGOUT_REDIRECT_URL = "login"
 
 # --- DRF и Swagger ---------------------------------------------------

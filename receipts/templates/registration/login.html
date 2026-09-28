@@ -1,0 +1,22 @@
+{% extends "receipts/base.html" %}
+
+{% block content %}
+<div class="page-center">
+  <form method="post" class="card card--narrow">
+    {% csrf_token %}
+    <h1>Вход</h1>
+    {% if form.errors %}
+      <div class="form-error">Неверный логин или пароль.</div>
+    {% endif %}
+    <label class="field">
+      <span class="field__label">Логин</span>
+      {{ form.username }}
+    </label>
+    <label class="field">
+      <span class="field__label">Пароль</span>
+      {{ form.password }}
+    </label>
+    <button type="submit" class="button button--primary button--full">Войти</button>
+  </form>
+</div>
+{% endblock %}

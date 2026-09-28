@@ -1,5 +1,5 @@
-from django.http import HttpResponse
+from django.shortcuts import render
 
 
 def home(request):
-    return HttpResponse("Чек на удачу — сервис запущен.")
+    return render(request, "receipts/home.html")

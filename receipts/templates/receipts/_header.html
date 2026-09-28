@@ -1,0 +1,48 @@
+{% load static %}
+<header class="header">
+  <div class="header__left">
+    <a href="/" class="header__logo" aria-label="На главную"></a>
+    <a href="/" class="header__back-link">
+      <img src="{% static 'receipts/icons/chevron-left.svg' %}" alt="" class="icon">
+      На сайт
+    </a>
+  </div>
+
+  <nav class="header__nav">
+    <a href="#" class="header__nav-link header__nav-link--active">Личный кабинет</a>
+    <a href="#" class="header__nav-link">Правила</a>
+    <a href="#" class="header__nav-link">Профиль</a>
+  </nav>
+
+  <div class="header__right">
+    <button type="button" class="header__icon-button" aria-label="Уведомления">
+      <img src="{% static 'receipts/icons/bell.svg' %}" alt="" class="icon">
+    </button>
+
+    {% if user.is_authenticated %}
+      <div class="header__user" data-header-user role="button" tabindex="0" aria-haspopup="true">
+        <span class="header__avatar">{{ user.username|first|upper }}</span>
+        <span class="header__user-info">
+          <span class="header__user-name">{{ user.get_full_name|default:user.username }}</span>
+          <span class="header__user-email">{{ user.email }}</span>
+        </span>
+        <img src="{% static 'receipts/icons/chevron-down.svg' %}" alt="" class="icon">
+
+        <div class="header__dropdown" data-header-dropdown hidden>
+          <a href="#" class="header__dropdown-item">Настройки</a>
+          <a href="#" class="header__dropdown-item">Помощь</a>
+          <form method="post" action="{% url 'logout' %}" class="header__logout-form">
+            {% csrf_token %}
+            <button type="submit" class="header__dropdown-item">Выйти</button>
+          </form>
+        </div>
+      </div>
+    {% else %}
+      <a href="{% url 'login' %}" class="header__nav-link">Войти</a>
+    {% endif %}
+  </div>
+
+  <button type="button" class="header__burger" data-header-burger aria-label="Меню">
+    <img src="{% static 'receipts/icons/menu.svg' %}" alt="">
+  </button>
+</header>
