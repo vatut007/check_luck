@@ -13,7 +13,8 @@ demo:
 	docker compose exec web python manage.py seed_demo
 
 test:
-	uv run pytest
+	docker compose up -d db
+	DATABASE_URL=postgres://promo:promo@localhost:55432/promo uv run pytest
 
 lint:
 	uv run ruff check .
