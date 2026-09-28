@@ -1,0 +1,128 @@
+{% extends "receipts/base.html" %}
+{% load static %}
+
+{% block title %}Регистрация чека — Чек на удачу{% endblock %}
+
+{% block content %}
+<div class="page-center">
+  {% if success %}
+    <div class="card card--form">
+      <div class="success-screen">
+        <img src="{% static 'receipts/icons/check.svg' %}" alt="" class="success-screen__icon">
+        <h1>Чек отправлен на проверку</h1>
+        <p class="success-screen__text">
+          Проверка чека может занять до 5 рабочих дней. Мы сообщим о результате в личном кабинете.
+        </p>
+        <div class="success-screen__actions">
+          <a href="{% url 'receipts:home' %}" class="button button--primary button--full">В личный кабинет</a>
+          <a href="{% url 'receipts:receipt-form' %}" class="button button--secondary button--full">
+            Зарегистрировать ещё
+          </a>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="card card--form">
+      <a href="{% url 'receipts:home' %}" class="card__close" aria-label="В кабинет">&times;</a>
+      <h1>Регистрация чека</h1>
+      <p class="card__subtitle">Введите необходимые данные с чека</p>
+      <p class="promo-period">
+        Акция проходит с {{ promo.start_date|date:"d.m.Y" }} по {{ promo.end_date|date:"d.m.Y" }}
+        (время на чеке)
+      </p>
+
+      {% if errors.general %}
+        <div class="form-error">{{ errors.general }}</div>
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <label class="field {% if errors.fn %}field--error{% endif %}">
+          <span class="field__label">ФН</span>
+          <input
+            type="text" name="fn" inputmode="numeric" maxlength="16" required
+            placeholder="Введите ФН" value="{{ values.fn }}"
+            aria-invalid="{% if errors.fn %}true{% else %}false{% endif %}"
+            {% if errors.fn %}aria-describedby="fn-error"{% endif %}
+          >
+          {% if errors.fn %}
+            <span id="fn-error" class="field__error">
+              <img src="{% static 'receipts/icons/danger.svg' %}" alt="" class="icon">{{ errors.fn }}
+            </span>
+          {% endif %}
+        </label>
+
+        <label class="field {% if errors.fd %}field--error{% endif %}">
+          <span class="field__label">Номер чека (ФД)</span>
+          <input
+            type="text" name="fd" inputmode="numeric" maxlength="10" required
+            placeholder="Введите номер чека (ФД)" value="{{ values.fd }}"
+            aria-invalid="{% if errors.fd %}true{% else %}false{% endif %}"
+            {% if errors.fd %}aria-describedby="fd-error"{% endif %}
+          >
+          {% if errors.fd %}
+            <span id="fd-error" class="field__error">
+              <img src="{% static 'receipts/icons/danger.svg' %}" alt="" class="icon">{{ errors.fd }}
+            </span>
+          {% endif %}
+        </label>
+
+        <label class="field {% if errors.fp %}field--error{% endif %}">
+          <span class="field__label">ФП</span>
+          <input
+            type="text" name="fp" inputmode="numeric" maxlength="10" required
+            placeholder="Введите ФП" value="{{ values.fp }}"
+            aria-invalid="{% if errors.fp %}true{% else %}false{% endif %}"
+            {% if errors.fp %}aria-describedby="fp-error"{% endif %}
+          >
+          {% if errors.fp %}
+            <span id="fp-error" class="field__error">
+              <img src="{% static 'receipts/icons/danger.svg' %}" alt="" class="icon">{{ errors.fp }}
+            </span>
+          {% endif %}
+        </label>
+
+        <label class="field {% if errors.purchased_at %}field--error{% endif %}">
+          <span class="field__label">Дата покупки</span>
+          <input
+            type="datetime-local" name="purchased_at" required
+            min="{{ promo.start_date|date:'Y-m-d' }}T00:00"
+            max="{{ promo.end_date|date:'Y-m-d' }}T23:59"
+            value="{{ values.purchased_at }}"
+            aria-invalid="{% if errors.purchased_at %}true{% else %}false{% endif %}"
+            {% if errors.purchased_at %}aria-describedby="purchased_at-error"{% endif %}
+          >
+          {% if errors.purchased_at %}
+            <span id="purchased_at-error" class="field__error">
+              <img src="{% static 'receipts/icons/danger.svg' %}" alt="" class="icon">{{ errors.purchased_at }}
+            </span>
+          {% endif %}
+        </label>
+
+        <label class="field {% if errors.amount %}field--error{% endif %}">
+          <span class="field__label">Сумма</span>
+          <input
+            type="text" name="amount" inputmode="decimal" required
+            placeholder="0.00 ₽" value="{{ values.amount }}"
+            aria-invalid="{% if errors.amount %}true{% else %}false{% endif %}"
+            {% if errors.amount %}aria-describedby="amount-error"{% endif %}
+          >
+          {% if errors.amount %}
+            <span id="amount-error" class="field__error">
+              <img src="{% static 'receipts/icons/danger.svg' %}" alt="" class="icon">{{ errors.amount }}
+            </span>
+          {% endif %}
+        </label>
+
+        <label class="field">
+          <span class="field__label">Фото чека (необязательно)</span>
+          <input type="file" name="photo" accept="image/*">
+        </label>
+
+        <button type="submit" class="button button--primary button--full">Загрузить</button>
+      </form>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
