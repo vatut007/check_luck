@@ -453,6 +453,14 @@ input[type="file"] {
   white-space: normal;
 }
 
+.receipts-table tr {
+  transition: background-color 0.3s ease;
+}
+
+.receipts-table tr.row--flash {
+  background-color: var(--color-primary-soft);
+}
+
 .receipt-thumb {
   width: 32px;
   height: 32px;

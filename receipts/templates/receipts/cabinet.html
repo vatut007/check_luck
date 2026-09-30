@@ -43,7 +43,7 @@
       </thead>
       <tbody>
         {% for item in receipts %}
-          <tr>
+          <tr data-receipt-id="{{ item.receipt.id }}" data-status="{{ item.receipt.status }}">
             <td class="cell cell--purchase" data-label="Дата покупки">
               {% if item.receipt.photo_thumb %}
                 <img src="{{ item.receipt.photo_thumb.url }}" alt="" class="receipt-thumb">
@@ -120,5 +120,16 @@
 {% endblock %}
 
 {% block extra_js %}
+  <script id="cabinet-config" type="application/json">
+    {
+      "receiptsUrl": "{% url 'receipts_api:receipt-list-create' %}",
+      "page": {{ page_obj.number }},
+      "ordering": "{{ ordering }}",
+      "hasPending": {{ has_pending|yesno:"true,false" }},
+      "giftIconUrl": "{% static 'receipts/icons/gift.svg' %}",
+      "infoIconUrl": "{% static 'receipts/icons/info.svg' %}"
+    }
+  </script>
   <script type="module" src="{% static 'receipts/js/cabinet-sort.js' %}"></script>
+  <script type="module" src="{% static 'receipts/js/cabinet-live.js' %}"></script>
 {% endblock %}

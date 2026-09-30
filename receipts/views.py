@@ -147,5 +147,6 @@ def cabinet(request):
             "sort_columns": _sort_columns(ordering),
             "receipts": [_present_receipt(r) for r in page_obj.object_list],
             "total_count": paginator.count,
+            "has_pending": any(r.status == ReceiptStatus.PENDING for r in page_obj.object_list),
         },
     )

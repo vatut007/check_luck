@@ -139,3 +139,35 @@ class TestCabinetBadgesAndInfo:
 
         item = response.context["receipts"][0]
         assert item["amount_display"] == "12 000"
+
+
+class TestCabinetLivePolling:
+    def test_has_pending_true_when_pending_receipt_on_page(self, client):
+        user = UserFactory()
+        client.force_login(user)
+        ReceiptFactory(user=user, status=ReceiptStatus.PENDING)
+
+        response = client.get(CABINET_URL)
+
+        assert response.context["has_pending"] is True
+        assert '"hasPending": true' in response.content.decode()
+
+    def test_has_pending_false_without_pending_receipts(self, client):
+        user = UserFactory()
+        client.force_login(user)
+        ReceiptFactory(user=user, status=ReceiptStatus.ACCEPTED)
+
+        response = client.get(CABINET_URL)
+
+        assert response.context["has_pending"] is False
+
+    def test_receipt_rows_carry_id_and_status_for_js(self, client):
+        user = UserFactory()
+        client.force_login(user)
+        receipt = ReceiptFactory(user=user, status=ReceiptStatus.PENDING)
+
+        response = client.get(CABINET_URL)
+
+        body = response.content.decode()
+        assert f'data-receipt-id="{receipt.id}"' in body
+        assert 'data-status="pending"' in body

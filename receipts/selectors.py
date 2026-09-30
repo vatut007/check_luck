@@ -1,5 +1,9 @@
 """Функции чтения — используются и из API, и из серверного кабинета."""
 
+import hashlib
+
+from django.db.models import Count, Max
+
 from receipts.models import Receipt
 
 ORDERING_FIELDS = {"purchased_at", "status", "amount", "created_at"}
@@ -23,3 +27,13 @@ def receipts_for_user(user, ordering=None):
         .select_related("prize")
         .order_by(resolve_ordering(ordering))
     )
+
+
+def receipts_etag(user) -> str:
+    """ETag из max(updated_at) и количества чеков пользователя — для polling с If-None-Match."""
+    agg = Receipt.objects.filter(user=user).aggregate(
+        last_updated=Max("updated_at"), total=Count("id")
+    )
+    last_updated = agg["last_updated"].isoformat() if agg["last_updated"] else ""
+    raw = f"{user.pk}:{agg['total']}:{last_updated}"
+    return hashlib.sha256(raw.encode()).hexdigest()

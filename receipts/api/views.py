@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.utils.http import quote_etag
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, serializers, status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -32,6 +33,17 @@ class ReceiptListCreateView(generics.ListCreateAPIView):
         if self.request.method == "POST":
             return [ScopedRateThrottle()]
         return []
+
+    def list(self, request, *args, **kwargs):
+        etag = quote_etag(selectors.receipts_etag(request.user))
+        if request.headers.get("If-None-Match") == etag:
+            response = Response(status=status.HTTP_304_NOT_MODIFIED)
+            response["ETag"] = etag
+            return response
+
+        response = super().list(request, *args, **kwargs)
+        response["ETag"] = etag
+        return response
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

@@ -40,6 +40,7 @@ class ReceiptSerializer(serializers.ModelSerializer):
     fp = serializers.CharField()
     amount = serializers.CharField()
     status_display = serializers.CharField(source="get_status_display", read_only=True)
+    prize_title = serializers.SerializerMethodField()
 
     class Meta:
         model = Receipt
@@ -53,6 +54,7 @@ class ReceiptSerializer(serializers.ModelSerializer):
             "status",
             "status_display",
             "reject_reason",
+            "prize_title",
             "photo",
             "photo_thumb",
             "created_at",
@@ -70,6 +72,9 @@ class ReceiptSerializer(serializers.ModelSerializer):
         # Уникальность fn+fd+fp разбирает services.register_receipt (три разных случая
         # дубля с разными кодами ответа) — авто-UniqueTogetherValidator тут не подходит.
         validators = []
+
+    def get_prize_title(self, obj: Receipt) -> str:
+        return obj.prize.title if obj.prize_id else ""
 
     def validate_fn(self, value: str) -> str:
         try:

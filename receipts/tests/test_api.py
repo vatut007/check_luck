@@ -1,7 +1,10 @@
+from decimal import Decimal
+
 import pytest
+from django.test import Client
 from django.utils import timezone
 
-from receipts.models import Receipt, ReceiptStatus
+from receipts.models import Draw, Receipt, ReceiptStatus
 from receipts.tests.factories import ReceiptFactory, UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -85,6 +88,90 @@ class TestReceiptList:
 
         assert len(data["results"]) == 10
         assert data["count"] == 15
+
+
+class TestReceiptListEtag:
+    def test_response_has_etag(self, client):
+        user = UserFactory()
+        client.force_login(user)
+        ReceiptFactory(user=user)
+
+        response = client.get(LIST_URL)
+
+        assert response.status_code == 200
+        assert response.headers.get("ETag")
+
+    def test_matching_if_none_match_returns_304_without_body(self, client):
+        user = UserFactory()
+        client.force_login(user)
+        ReceiptFactory(user=user)
+
+        first = client.get(LIST_URL)
+        etag = first.headers["ETag"]
+
+        second = client.get(LIST_URL, HTTP_IF_NONE_MATCH=etag)
+
+        assert second.status_code == 304
+        assert second.content == b""
+
+    def test_etag_changes_after_receipt_is_updated(self, client):
+        user = UserFactory()
+        client.force_login(user)
+        receipt = ReceiptFactory(user=user)
+
+        first = client.get(LIST_URL)
+        etag = first.headers["ETag"]
+
+        receipt.amount = Decimal("2000.00")
+        receipt.save(update_fields=["amount", "updated_at"])
+
+        second = client.get(LIST_URL, HTTP_IF_NONE_MATCH=etag)
+
+        assert second.status_code == 200
+        assert second.headers["ETag"] != etag
+
+    def test_etag_differs_between_users(self, client):
+        user = UserFactory()
+        other = UserFactory()
+        ReceiptFactory(user=user)
+        ReceiptFactory(user=other)
+        client.force_login(user)
+        other_client = Client()
+        other_client.force_login(other)
+
+        response = client.get(LIST_URL)
+        other_response = other_client.get(LIST_URL)
+
+        assert response.headers["ETag"] != other_response.headers["ETag"]
+
+
+class TestReceiptSerialization:
+    def test_prize_title_is_empty_without_a_prize(self, client):
+        user = UserFactory()
+        client.force_login(user)
+        ReceiptFactory(user=user, status=ReceiptStatus.ACCEPTED)
+
+        response = client.get(LIST_URL)
+
+        assert response.json()["results"][0]["prize_title"] == ""
+
+    def test_prize_title_reflects_the_won_draw(self, client):
+        user = UserFactory()
+        client.force_login(user)
+        draw = Draw.objects.create(
+            title="Сертификат 5000 ₽",
+            winners_count=1,
+            seed="seed",
+            participants_count=1,
+            participants=[],
+            participants_hash="hash",
+            performed_by=user,
+        )
+        ReceiptFactory(user=user, status=ReceiptStatus.WON, prize=draw)
+
+        response = client.get(LIST_URL)
+
+        assert response.json()["results"][0]["prize_title"] == "Сертификат 5000 ₽"
 
 
 class TestReceiptCreate:
