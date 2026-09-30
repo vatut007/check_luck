@@ -185,6 +185,70 @@ class TestReceiptAdminActions:
         assert receipt.status == ReceiptStatus.PENDING
 
 
+class TestExportAcceptedCsv:
+    def test_only_accepted_receipts_are_exported(self, client):
+        staff = _staff_user()
+        client.force_login(staff)
+        accepted = ReceiptFactory(status=ReceiptStatus.ACCEPTED)
+        pending = ReceiptFactory(status=ReceiptStatus.PENDING)
+        rejected = ReceiptFactory(status=ReceiptStatus.REJECTED, reject_reason="x")
+
+        response = client.post(
+            reverse("admin:receipts_receipt_changelist"),
+            data={
+                "action": "export_accepted_csv",
+                "_selected_action": [accepted.pk, pending.pk, rejected.pk],
+            },
+        )
+
+        body = b"".join(response.streaming_content).decode("utf-8-sig")
+        assert accepted.fn in body
+        assert pending.fn not in body
+        assert rejected.fn not in body
+
+    def test_response_starts_with_utf8_bom(self, client):
+        staff = _staff_user()
+        client.force_login(staff)
+        receipt = ReceiptFactory(status=ReceiptStatus.ACCEPTED)
+
+        response = client.post(
+            reverse("admin:receipts_receipt_changelist"),
+            data={"action": "export_accepted_csv", "_selected_action": [receipt.pk]},
+        )
+
+        raw = b"".join(response.streaming_content)
+        assert raw.startswith(b"\xef\xbb\xbf")
+
+    def test_uses_semicolon_delimiter(self, client):
+        staff = _staff_user()
+        client.force_login(staff)
+        receipt = ReceiptFactory(status=ReceiptStatus.ACCEPTED)
+
+        response = client.post(
+            reverse("admin:receipts_receipt_changelist"),
+            data={"action": "export_accepted_csv", "_selected_action": [receipt.pk]},
+        )
+
+        body = b"".join(response.streaming_content).decode("utf-8-sig")
+        header_line = body.splitlines()[0]
+        assert header_line.count(";") >= 7
+
+    def test_content_type_and_filename(self, client):
+        staff = _staff_user()
+        client.force_login(staff)
+        receipt = ReceiptFactory(status=ReceiptStatus.ACCEPTED)
+
+        response = client.post(
+            reverse("admin:receipts_receipt_changelist"),
+            data={"action": "export_accepted_csv", "_selected_action": [receipt.pk]},
+        )
+
+        assert response["Content-Type"] == "text/csv; charset=utf-8"
+        assert response["Content-Disposition"].startswith(
+            'attachment; filename="receipts_accepted_'
+        )
+
+
 class TestReceiptStatusLogInline:
     def test_inline_is_read_only(self, client):
         staff = _staff_user()

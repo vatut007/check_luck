@@ -1,7 +1,11 @@
+import csv
+
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin import helpers
+from django.http import StreamingHttpResponse
 from django.shortcuts import render
+from django.utils import timezone
 from django.utils.html import format_html
 
 from receipts.models import Receipt, ReceiptStatus, ReceiptStatusLog
@@ -106,10 +110,48 @@ def reject_selected(modeladmin, request, queryset):
     )
 
 
+class Echo:
+    """Псевдо-файл для csv.writer: writerow() пишет сюда и возвращает записанную строку,
+    которую генератор сразу отдаёт в StreamingHttpResponse."""
+
+    def write(self, value):
+        return value
+
+
+@admin.action(description="Выгрузить принятые в CSV")
+def export_accepted_csv(modeladmin, request, queryset):
+    accepted = queryset.filter(status=ReceiptStatus.ACCEPTED).select_related("user")
+
+    def rows():
+        yield "﻿"  # BOM, чтобы русский Excel открыл файл без кракозябр
+        writer = csv.writer(Echo(), delimiter=";")
+        yield writer.writerow(
+            ["ID", "Пользователь", "ФН", "ФД", "ФП", "Сумма", "Дата покупки", "Дата регистрации"]
+        )
+        for receipt in accepted.iterator():
+            yield writer.writerow(
+                [
+                    receipt.id,
+                    receipt.user.username,
+                    receipt.fn,
+                    receipt.fd,
+                    receipt.fp,
+                    str(receipt.amount),
+                    receipt.purchased_at.strftime("%d.%m.%Y %H:%M"),
+                    receipt.created_at.strftime("%d.%m.%Y %H:%M"),
+                ]
+            )
+
+    filename = f"receipts_accepted_{timezone.localdate():%Y-%m-%d}.csv"
+    response = StreamingHttpResponse(rows(), content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
 @admin.register(Receipt)
 class ReceiptAdmin(admin.ModelAdmin):
     form = ReceiptAdminForm
-    actions = [accept_selected, reject_selected]
+    actions = [accept_selected, reject_selected, export_accepted_csv]
 
     list_display = [
         "id",
