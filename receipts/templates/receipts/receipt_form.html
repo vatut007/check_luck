@@ -38,6 +38,20 @@
       <form method="post" enctype="multipart/form-data" novalidate data-receipt-form>
         {% csrf_token %}
 
+        <div class="field qr-field">
+          <span class="field__label">Вставить строку из QR-кода</span>
+          <div class="qr-field__row">
+            <input
+              type="text" id="qr-input"
+              placeholder="t=20261015T1830&amp;s=1234.56&amp;fn=...&amp;i=...&amp;fp=..."
+            >
+            <button type="button" id="qr-fill-button" class="button button--secondary">
+              Заполнить
+            </button>
+          </div>
+          <span id="qr-error" class="field__error"></span>
+        </div>
+
         <label class="field {% if errors.fn %}field--error{% endif %}">
           <span class="field__label">ФН</span>
           <input
@@ -132,6 +146,7 @@
     {
       "promoUrl": "{% url 'receipts_api:promo-config' %}",
       "receiptsUrl": "{% url 'receipts_api:receipt-list-create' %}",
+      "parseQrUrl": "{% url 'receipts_api:receipt-parse-qr' %}",
       "cabinetUrl": "{% url 'receipts:cabinet' %}",
       "formUrl": "{% url 'receipts:receipt-form' %}",
       "checkIconUrl": "{% static 'receipts/icons/check.svg' %}",

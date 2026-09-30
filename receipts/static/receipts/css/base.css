@@ -295,6 +295,26 @@ textarea {
   border-radius: var(--radius-input);
   font: inherit;
   color: var(--color-text);
+  transition: background-color 0.3s ease;
+}
+
+.field--highlight input {
+  background: var(--color-primary-soft);
+}
+
+.qr-field {
+  background: var(--color-surface-muted);
+  padding: 16px;
+  border-radius: var(--radius-input);
+}
+
+.qr-field__row {
+  display: flex;
+  gap: 8px;
+}
+
+.qr-field__row input {
+  flex: 1;
 }
 
 input::placeholder {

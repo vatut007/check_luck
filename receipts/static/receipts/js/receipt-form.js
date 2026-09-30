@@ -207,6 +207,43 @@ async function handleSubmit(event, form, promo, config) {
   }
 }
 
+function highlightField(input) {
+  const field = input.closest(".field");
+  field.classList.add("field--highlight");
+  setTimeout(() => field.classList.remove("field--highlight"), 1000);
+}
+
+async function handleQrFill(form, config) {
+  const qrInput = document.getElementById("qr-input");
+  const qrError = document.getElementById("qr-error");
+  qrError.textContent = "";
+
+  const raw = qrInput.value.trim();
+  if (!raw) return;
+
+  try {
+    const data = await apiFetch(config.parseQrUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ raw }),
+    });
+
+    for (const name of VALIDATED_FIELDS) {
+      const input = form.elements.namedItem(name);
+      input.value = data[name];
+      highlightField(input);
+    }
+  } catch (error) {
+    if (error instanceof ApiError) {
+      const data = error.data || {};
+      const fieldErrors = data.errors || {};
+      const rawErrors = fieldErrors.raw;
+      qrError.textContent =
+        (rawErrors && rawErrors[0]) || data.detail || "Не удалось разобрать строку из QR-кода.";
+    }
+  }
+}
+
 async function initReceiptForm() {
   const form = document.querySelector("[data-receipt-form]");
   if (!form) return;
@@ -233,6 +270,11 @@ async function initReceiptForm() {
   });
 
   form.addEventListener("submit", (event) => handleSubmit(event, form, promo, config));
+
+  const qrButton = document.getElementById("qr-fill-button");
+  if (qrButton) {
+    qrButton.addEventListener("click", () => handleQrFill(form, config));
+  }
 }
 
 initReceiptForm();

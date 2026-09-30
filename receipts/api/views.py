@@ -1,13 +1,19 @@
 from django.conf import settings
 from drf_spectacular.utils import extend_schema
-from rest_framework import generics, status
+from rest_framework import generics, serializers, status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from receipts import selectors
-from receipts.api.serializers import PromoConfigSerializer, ReceiptSerializer
+from receipts.api.serializers import (
+    ParsedReceiptSerializer,
+    ParseQrRequestSerializer,
+    PromoConfigSerializer,
+    ReceiptSerializer,
+)
+from receipts.qr import QrParseError, parse_qr_string
 
 
 class ReceiptListCreateView(generics.ListCreateAPIView):
@@ -54,3 +60,19 @@ class PromoConfigView(APIView):
                 "photo_max_mb": promo.photo_max_mb,
             }
         )
+
+
+class ParseQrView(APIView):
+    """Разбор строки из QR-кода — заполняет поля формы, ничего не сохраняет."""
+
+    @extend_schema(request=ParseQrRequestSerializer, responses=ParsedReceiptSerializer)
+    def post(self, request):
+        serializer = ParseQrRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            data = parse_qr_string(serializer.validated_data["raw"])
+        except QrParseError as exc:
+            raise serializers.ValidationError({"raw": [exc.message]}) from exc
+
+        return Response(data)

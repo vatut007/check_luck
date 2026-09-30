@@ -20,6 +20,18 @@ class PromoConfigSerializer(serializers.Serializer):
     photo_max_mb = serializers.IntegerField()
 
 
+class ParseQrRequestSerializer(serializers.Serializer):
+    raw = serializers.CharField()
+
+
+class ParsedReceiptSerializer(serializers.Serializer):
+    fn = serializers.CharField()
+    fd = serializers.CharField()
+    fp = serializers.CharField()
+    purchased_at = serializers.CharField()
+    amount = serializers.CharField()
+
+
 class ReceiptSerializer(serializers.ModelSerializer):
     # Переопределены как CharField, чтобы модель проверки (validators.py) сама решала,
     # что делать с пробелами и запятой в сумме — раньше, чем DRF успеет отклонить их сам.
