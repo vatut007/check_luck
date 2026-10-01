@@ -37,16 +37,33 @@ class TestReceiptFormView:
         assert response.status_code == 200
         assert b'name="fn"' in response.content
 
-    def test_valid_post_creates_receipt_and_shows_success(self, client, promo_period):
+    def test_valid_post_redirects_to_success_page(self, client, promo_period):
         user = UserFactory()
         client.force_login(user)
 
         response = client.post(FORM_URL, data=_payload())
 
-        assert response.status_code == 200
-        assert "Чек отправлен на проверку" in response.content.decode()
+        assert response.status_code == 302
+        assert response.url == reverse("receipts:receipt-form-success")
         receipt = Receipt.objects.get(user=user)
         assert receipt.status == ReceiptStatus.PENDING
+
+    def test_reloading_success_page_does_not_resubmit_the_form(self, client, promo_period):
+        # Имитация F5 без JS: после редиректа повторный GET на страницу успеха
+        # не должен ничего отправлять повторно — это уже просто страница.
+        user = UserFactory()
+        client.force_login(user)
+
+        create_response = client.post(FORM_URL, data=_payload())
+        success_url = create_response.url
+
+        first_reload = client.get(success_url)
+        second_reload = client.get(success_url)
+
+        assert first_reload.status_code == 200
+        assert "Чек отправлен на проверку" in first_reload.content.decode()
+        assert second_reload.status_code == 200
+        assert Receipt.objects.filter(user=user).count() == 1
 
     def test_invalid_fn_rerenders_form_with_field_error(self, client, promo_period):
         user = UserFactory()
@@ -78,6 +95,6 @@ class TestReceiptFormView:
 
         response = client.post(FORM_URL, data=_payload(status=ReceiptStatus.WON))
 
-        assert response.status_code == 200
+        assert response.status_code == 302
         receipt = Receipt.objects.get(user=user)
         assert receipt.status == ReceiptStatus.PENDING

@@ -5,23 +5,6 @@
 
 {% block content %}
 <div class="page-center">
-  {% if success %}
-    <div class="card card--form">
-      <div class="success-screen">
-        <img src="{% static 'receipts/icons/check.svg' %}" alt="" class="success-screen__icon">
-        <h1>Чек отправлен на проверку</h1>
-        <p class="success-screen__text">
-          Проверка чека может занять до 5 рабочих дней. Мы сообщим о результате в личном кабинете.
-        </p>
-        <div class="success-screen__actions">
-          <a href="{% url 'receipts:cabinet' %}" class="button button--primary button--full">В личный кабинет</a>
-          <a href="{% url 'receipts:receipt-form' %}" class="button button--secondary button--full">
-            Зарегистрировать ещё
-          </a>
-        </div>
-      </div>
-    </div>
-  {% else %}
     <div class="card card--form">
       <a href="{% url 'receipts:cabinet' %}" class="card__close" aria-label="В кабинет">&times;</a>
       <h1>Регистрация чека</h1>
@@ -142,7 +125,6 @@
         <button type="submit" class="button button--primary button--full">Загрузить</button>
       </form>
     </div>
-  {% endif %}
 </div>
 {% endblock %}
 

@@ -44,7 +44,6 @@ def receipt_form(request):
     promo = settings.PROMO
     values = {"fn": "", "fd": "", "fp": "", "purchased_at": "", "amount": ""}
     errors = {}
-    success = False
 
     if request.method == "POST":
         values = {name: request.POST.get(name, "") for name in values}
@@ -83,15 +82,24 @@ def receipt_form(request):
         if not errors:
             try:
                 register_receipt(user=request.user, photo=photo, **cleaned)
-                success = True
             except DuplicateReceiptError as exc:
                 errors["general"] = exc.message
+            else:
+                # PRG: без этого редиректа F5 после успешной отправки
+                # повторно отправляет ту же форму (POST) и чек регистрируется
+                # ещё раз / показывает "уже зарегистрирован".
+                return redirect("receipts:receipt-form-success")
 
     return render(
         request,
         "receipts/receipt_form.html",
-        {"promo": promo, "values": values, "errors": errors, "success": success},
+        {"promo": promo, "values": values, "errors": errors},
     )
+
+
+@login_required
+def receipt_form_success(request):
+    return render(request, "receipts/receipt_form_success.html")
 
 
 SORTABLE_COLUMNS = [

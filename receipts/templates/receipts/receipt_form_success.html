@@ -1,0 +1,24 @@
+{% extends "receipts/base.html" %}
+{% load static %}
+
+{% block title %}Чек отправлен — Чек на удачу{% endblock %}
+
+{% block content %}
+<div class="page-center">
+  <div class="card card--form">
+    <div class="success-screen">
+      <img src="{% static 'receipts/icons/check.svg' %}" alt="" class="success-screen__icon">
+      <h1>Чек отправлен на проверку</h1>
+      <p class="success-screen__text">
+        Проверка чека может занять до 5 рабочих дней. Мы сообщим о результате в личном кабинете.
+      </p>
+      <div class="success-screen__actions">
+        <a href="{% url 'receipts:cabinet' %}" class="button button--primary button--full">В личный кабинет</a>
+        <a href="{% url 'receipts:receipt-form' %}" class="button button--secondary button--full">
+          Зарегистрировать ещё
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
