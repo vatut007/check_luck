@@ -102,6 +102,20 @@ class TestRunDraw:
 
         assert won_id not in [r for r, _u in second_draw.participants]
 
+    def test_raises_when_not_enough_distinct_users_even_with_enough_receipts(self):
+        # 5 чеков, но только от 2 разных пользователей — выиграть могут
+        # только 2 человека, запрошенные 3 победителя физически недостижимы.
+        staff = UserFactory(is_staff=True)
+        user_a = UserFactory()
+        user_b = UserFactory()
+        for user in [user_a, user_a, user_a, user_b, user_b]:
+            ReceiptFactory(status=ReceiptStatus.ACCEPTED, user=user)
+
+        with pytest.raises(DrawError, match="Недостаточно"):
+            run_draw(title="Приз", winners_count=3, seed="s", actor=staff)
+
+        assert Draw.objects.count() == 0
+
     def test_blank_title_is_rejected(self):
         staff = UserFactory(is_staff=True)
         ReceiptFactory(status=ReceiptStatus.ACCEPTED)

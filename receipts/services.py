@@ -202,10 +202,14 @@ def run_draw(*, title: str, winners_count: int, seed: str = "", actor) -> Draw:
             .order_by("id")
             .values_list("id", "user_id")
         )
-        if len(eligible) < winners_count:
+        # Выиграть может только один раз на пользователя — считаем именно
+        # разных участников, а не число чеков, иначе запрошенное количество
+        # победителей может оказаться физически недостижимым.
+        eligible_users = {user_id for _, user_id in eligible}
+        if len(eligible_users) < winners_count:
             raise DrawError(
-                f"Недостаточно принятых чеков для розыгрыша: "
-                f"{len(eligible)} из {winners_count} нужных."
+                f"Недостаточно участников (разных пользователей) для розыгрыша: "
+                f"{len(eligible_users)} из {winners_count} нужных."
             )
 
         participants = [[receipt_id, user_id] for receipt_id, user_id in eligible]
