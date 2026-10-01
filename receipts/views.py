@@ -15,8 +15,9 @@ from receipts.photos import PhotoError, validate_photo
 from receipts.services import DuplicateReceiptError, register_receipt
 
 
+@login_required
 def home(request):
-    return render(request, "receipts/home.html")
+    return redirect("receipts:cabinet")
 
 
 def signup(request):
