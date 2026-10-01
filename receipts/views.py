@@ -1,10 +1,12 @@
 import datetime as dt
 
 from django.conf import settings
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
 from django.core.paginator import Paginator
 from django.http import FileResponse, Http404
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from receipts import selectors, validators
 from receipts.models import Receipt, ReceiptStatus
@@ -14,6 +16,19 @@ from receipts.services import DuplicateReceiptError, register_receipt
 
 def home(request):
     return render(request, "receipts/home.html")
+
+
+def signup(request):
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect("receipts:cabinet")
+    else:
+        form = UserCreationForm()
+
+    return render(request, "registration/signup.html", {"form": form})
 
 
 FIELD_LABELS_TO_VALIDATORS = {

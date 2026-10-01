@@ -17,6 +17,9 @@
       {{ form.password }}
     </label>
     <button type="submit" class="button button--primary button--full">Войти</button>
+    <p class="card__footnote">
+      Нет аккаунта? <a href="{% url 'signup' %}">Зарегистрироваться</a>
+    </p>
   </form>
 </div>
 {% endblock %}

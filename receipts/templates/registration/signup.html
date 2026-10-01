@@ -1,0 +1,35 @@
+{% extends "receipts/base.html" %}
+
+{% block content %}
+<div class="page-center">
+  <form method="post" class="card card--narrow">
+    {% csrf_token %}
+    <h1>Регистрация</h1>
+    {% if form.non_field_errors %}
+      <div class="form-error">{{ form.non_field_errors|join:" " }}</div>
+    {% endif %}
+    <label class="field {% if form.username.errors %}field--error{% endif %}">
+      <span class="field__label">Логин</span>
+      {{ form.username }}
+      {% if form.username.errors %}
+        <span class="field__error">{{ form.username.errors|join:" " }}</span>
+      {% endif %}
+    </label>
+    <label class="field {% if form.password1.errors %}field--error{% endif %}">
+      <span class="field__label">Пароль</span>
+      {{ form.password1 }}
+      {% if form.password1.errors %}
+        <span class="field__error">{{ form.password1.errors|join:" " }}</span>
+      {% endif %}
+    </label>
+    <label class="field {% if form.password2.errors %}field--error{% endif %}">
+      <span class="field__label">Повторите пароль</span>
+      {{ form.password2 }}
+      {% if form.password2.errors %}
+        <span class="field__error">{{ form.password2.errors|join:" " }}</span>
+      {% endif %}
+    </label>
+    <button type="submit" class="button button--primary button--full">Зарегистрироваться</button>
+  </form>
+</div>
+{% endblock %}
