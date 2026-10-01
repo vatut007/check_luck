@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db import connection
+from django.db import IntegrityError, connection
 from django.utils import timezone
 from PIL import Image
 
@@ -110,6 +110,16 @@ class TestRegisterReceipt:
         log = receipt.status_logs.latest("created_at")
         assert log.from_status == ReceiptStatus.REJECTED
         assert log.to_status == ReceiptStatus.PENDING
+
+    def test_non_duplicate_integrity_error_propagates_instead_of_does_not_exist(self):
+        # IntegrityError не всегда означает гонку по (fn, fd, fp) — например,
+        # его может бросить CheckConstraint на amount. Раньше код всегда считал
+        # это гонкой и делал .get(), который падал с DoesNotExist вместо
+        # понятной IntegrityError.
+        user = UserFactory()
+
+        with pytest.raises(IntegrityError):
+            register_receipt(user=user, **_receipt_kwargs(amount=Decimal("0.00")))
 
     @pytest.mark.django_db(transaction=True)
     def test_concurrent_registration_yields_one_success_one_conflict(self):

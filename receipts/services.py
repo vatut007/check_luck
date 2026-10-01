@@ -68,7 +68,12 @@ def register_receipt(
                 )
         except IntegrityError:
             # Гонка: кто-то успел вставить такой же чек между select и insert.
-            existing = Receipt.objects.select_for_update().get(fn=fn, fd=fd, fp=fp)
+            # Но IntegrityError бросает и CheckConstraint на amount — если
+            # дубля на самом деле нет, это не гонка, и такую ошибку нужно
+            # пробросить как есть, а не прятать за непонятным DoesNotExist.
+            existing = Receipt.objects.select_for_update().filter(fn=fn, fd=fd, fp=fp).first()
+            if existing is None:
+                raise
             return _resubmit_or_reject(
                 existing,
                 user=user,

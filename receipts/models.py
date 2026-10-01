@@ -94,9 +94,12 @@ class Receipt(models.Model):
         verbose_name_plural = "Чеки"
         constraints = [
             models.UniqueConstraint(fields=["fn", "fd", "fp"], name="receipt_fiscal_unique"),
-            # Порог на уровне БД, не путать с настраиваемым PROMO_MIN_AMOUNT
-            # из validators.py — это просто санитарный минимум записи.
-            models.CheckConstraint(condition=models.Q(amount__gte=1000), name="receipt_amount_min"),
+            # Санитарная проверка на уровне БД (сумма не может быть нулевой
+            # или отрицательной), не путать с настраиваемым PROMO_MIN_AMOUNT
+            # из validators.py — тот порог живёт только в .env и не может
+            # быть жёстко зашит сюда, иначе понижение PROMO_MIN_AMOUNT ниже
+            # старого значения привело бы к IntegrityError на каждой заявке.
+            models.CheckConstraint(condition=models.Q(amount__gt=0), name="receipt_amount_min"),
             models.CheckConstraint(
                 condition=~(models.Q(status=ReceiptStatus.REJECTED) & models.Q(reject_reason="")),
                 name="receipt_reject_reason_required",
