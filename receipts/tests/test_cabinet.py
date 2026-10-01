@@ -141,6 +141,26 @@ class TestCabinetBadgesAndInfo:
         assert item["amount_display"] == "12 000"
 
 
+class TestAmountDisplay:
+    def test_kopecks_are_shown_when_present_not_rounded_away(self, client):
+        user = UserFactory()
+        client.force_login(user)
+        ReceiptFactory(user=user, amount=Decimal("1234.56"))
+
+        response = client.get(CABINET_URL)
+
+        assert response.context["receipts"][0]["amount_display"] == "1 234,56"
+
+    def test_whole_amount_is_shown_without_trailing_zero_kopecks(self, client):
+        user = UserFactory()
+        client.force_login(user)
+        ReceiptFactory(user=user, amount=Decimal("1500.00"))
+
+        response = client.get(CABINET_URL)
+
+        assert response.context["receipts"][0]["amount_display"] == "1 500"
+
+
 class TestCabinetLivePolling:
     def test_has_pending_true_when_pending_receipt_on_page(self, client):
         user = UserFactory()

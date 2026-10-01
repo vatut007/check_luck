@@ -7,6 +7,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.core.paginator import Paginator
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.formats import number_format
 
 from receipts import selectors, validators
 from receipts.models import Receipt, ReceiptStatus
@@ -119,13 +120,21 @@ def _receipt_info_text(receipt):
     return ""
 
 
+def _format_amount(amount):
+    # Копейки показываем только когда они не нулевые — "1 500 ₽" вместо
+    # "1 500,00 ₽", но "1 234,56 ₽", если сумма действительно не круглая.
+    decimal_pos = 0 if amount == amount.to_integral_value() else 2
+    formatted = number_format(amount, decimal_pos=decimal_pos, force_grouping=True)
+    return formatted.replace("\xa0", " ")
+
+
 def _present_receipt(receipt):
     badge = STATUS_BADGES[receipt.status]
     return {
         "receipt": receipt,
         "badge_label": badge["label"],
         "badge_modifier": badge["modifier"],
-        "amount_display": f"{receipt.amount:,.0f}".replace(",", " "),
+        "amount_display": _format_amount(receipt.amount),
         "info": _receipt_info_text(receipt),
     }
 
