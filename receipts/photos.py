@@ -3,7 +3,7 @@
 import io
 
 from django.core.files.base import ContentFile
-from PIL import Image
+from PIL import Image, ImageOps
 
 from receipts.errors import DomainError
 
@@ -57,6 +57,17 @@ def process_photo(file) -> tuple[ContentFile, ContentFile]:
     image = Image.open(file)
     image.load()
     fmt = image.format or "JPEG"
+
+    # exif_transpose() должен отработать до того, как EXIF исчезнет вместе
+    # с тегом ориентации — иначе портретное фото с телефона ложится набок.
+    image = ImageOps.exif_transpose(image)
+
+    if image.mode == "P":
+        # frombytes() на "P" кладёт в пиксели индексы палитры, а не цвета —
+        # без неё и без конвертации в RGB результат превращается в чёрный
+        # квадрат. convert("RGBA" для прозрачных PNG, иначе "RGB") печёт
+        # палитру в реальные цвета перед пересборкой.
+        image = image.convert("RGBA" if "transparency" in image.info else "RGB")
 
     clean_image = Image.frombytes(image.mode, image.size, image.tobytes())
     cleaned = _save_image(clean_image, fmt)

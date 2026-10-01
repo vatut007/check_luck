@@ -79,3 +79,42 @@ class TestProcessPhoto:
         cleaned, thumb = process_photo(file)
         assert Image.open(io.BytesIO(cleaned.read())).format == "PNG"
         assert Image.open(io.BytesIO(thumb.read())).format == "PNG"
+
+    def test_applies_exif_orientation_before_stripping_it(self):
+        # Портретный кадр 150x200 с полосой другого цвета сверху, снятый
+        # "лёжа на боку": Orientation=6 говорит, что для правильного вида
+        # его нужно повернуть на 90° по часовой стрелке.
+        image = Image.new("RGB", (200, 150), color="red")
+        for x in range(200):
+            for y in range(20):
+                image.putpixel((x, y), (0, 0, 255))
+
+        exif = Image.Exif()
+        exif[274] = 6  # тег Orientation
+        buffer = io.BytesIO()
+        image.save(buffer, format="JPEG", exif=exif.tobytes())
+        buffer.seek(0)
+        file = SimpleUploadedFile("receipt.jpg", buffer.getvalue(), content_type="image/jpeg")
+
+        cleaned, _thumb = process_photo(file)
+        result_image = Image.open(io.BytesIO(cleaned.read()))
+
+        assert result_image.size == (150, 200)
+        assert not dict(result_image.getexif())
+
+    def test_preserves_palette_colors_for_indexed_png(self):
+        image = Image.new("P", (40, 40))
+        palette = [0, 0, 0] * 256
+        palette[3 * 7 : 3 * 7 + 3] = [255, 0, 0]  # индекс 7 -> красный
+        image.putpalette(palette)
+        image.putdata([7] * (40 * 40))
+
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+        buffer.seek(0)
+        file = SimpleUploadedFile("receipt.png", buffer.getvalue(), content_type="image/png")
+
+        cleaned, _thumb = process_photo(file)
+        result_image = Image.open(io.BytesIO(cleaned.read())).convert("RGB")
+
+        assert result_image.getpixel((0, 0)) == (255, 0, 0)
