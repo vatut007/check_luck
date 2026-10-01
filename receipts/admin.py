@@ -5,6 +5,7 @@ from django.contrib import admin, messages
 from django.contrib.admin import helpers
 from django.http import StreamingHttpResponse
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
@@ -203,7 +204,8 @@ class ReceiptAdmin(admin.ModelAdmin):
     def photo_preview(self, obj):
         if not obj.photo:
             return "—"
-        return format_html('<img src="{}" style="max-height: 200px">', obj.photo.url)
+        url = reverse("receipts:receipt-photo", args=[obj.pk])
+        return format_html('<img src="{}" style="max-height: 200px">', url)
 
     def save_model(self, request, obj, form, change):
         if not change or "status" not in form.changed_data:

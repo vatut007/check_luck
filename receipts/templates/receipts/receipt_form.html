@@ -129,9 +129,14 @@
           {% endif %}
         </label>
 
-        <label class="field">
+        <label class="field {% if errors.photo %}field--error{% endif %}">
           <span class="field__label">Фото чека (необязательно)</span>
           <input type="file" name="photo" accept="image/*">
+          {% if errors.photo %}
+            <span class="field__error">
+              <img src="{% static 'receipts/icons/danger.svg' %}" alt="" class="icon">{{ errors.photo }}
+            </span>
+          {% endif %}
         </label>
 
         <button type="submit" class="button button--primary button--full">Загрузить</button>

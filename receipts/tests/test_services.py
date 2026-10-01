@@ -1,9 +1,12 @@
+import io
 import threading
 from decimal import Decimal
 
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
 from django.utils import timezone
+from PIL import Image
 
 from receipts.models import ReceiptStatus
 from receipts.services import (
@@ -41,6 +44,23 @@ class TestRegisterReceipt:
         assert log.from_status == ""
         assert log.to_status == ReceiptStatus.PENDING
         assert log.actor == user
+
+    def test_photo_is_processed_into_photo_and_thumbnail(self):
+        user = UserFactory()
+        exif = Image.Exif()
+        exif[271] = "TestCameraMake"
+        buffer = io.BytesIO()
+        Image.new("RGB", (200, 150), color="red").save(buffer, format="JPEG", exif=exif.tobytes())
+        photo = SimpleUploadedFile("receipt.jpg", buffer.getvalue(), content_type="image/jpeg")
+
+        receipt, _created = register_receipt(user=user, photo=photo, **_receipt_kwargs())
+
+        assert receipt.photo
+        assert receipt.photo_thumb
+        saved_photo = Image.open(receipt.photo)
+        assert not dict(saved_photo.getexif())
+        saved_thumb = Image.open(receipt.photo_thumb)
+        assert saved_thumb.width <= 104 and saved_thumb.height <= 104
 
     @pytest.mark.parametrize(
         "status", [ReceiptStatus.PENDING, ReceiptStatus.ACCEPTED, ReceiptStatus.WON]

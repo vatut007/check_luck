@@ -3,10 +3,12 @@ import datetime as dt
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.shortcuts import render
+from django.http import FileResponse, Http404
+from django.shortcuts import get_object_or_404, render
 
 from receipts import selectors, validators
-from receipts.models import ReceiptStatus
+from receipts.models import Receipt, ReceiptStatus
+from receipts.photos import PhotoError, validate_photo
 from receipts.services import DuplicateReceiptError, register_receipt
 
 
@@ -55,9 +57,16 @@ def receipt_form(request):
             except validators.ValidationError as exc:
                 errors["purchased_at"] = str(exc)
 
+        photo = request.FILES.get("photo")
+        if photo is not None:
+            try:
+                validate_photo(photo, promo.photo_max_mb)
+            except PhotoError as exc:
+                errors["photo"] = exc.message
+
         if not errors:
             try:
-                register_receipt(user=request.user, photo=request.FILES.get("photo"), **cleaned)
+                register_receipt(user=request.user, photo=photo, **cleaned)
                 success = True
             except DuplicateReceiptError as exc:
                 errors["general"] = exc.message
@@ -150,3 +159,17 @@ def cabinet(request):
             "has_pending": any(r.status == ReceiptStatus.PENDING for r in page_obj.object_list),
         },
     )
+
+
+@login_required
+def receipt_photo(request, pk):
+    """Фото чека не отдаётся из /media/ напрямую — только тому, кому принадлежит чек."""
+    receipt = get_object_or_404(Receipt, pk=pk)
+    if receipt.user_id != request.user.id and not request.user.is_staff:
+        raise Http404
+
+    image_field = receipt.photo_thumb if request.GET.get("size") == "thumb" else receipt.photo
+    if not image_field:
+        raise Http404
+
+    return FileResponse(image_field.open("rb"))

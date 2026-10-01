@@ -1,8 +1,11 @@
+import io
 from decimal import Decimal
 
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.utils import timezone
+from PIL import Image
 
 from receipts.models import Draw, Receipt, ReceiptStatus
 from receipts.tests.factories import ReceiptFactory, UserFactory
@@ -197,6 +200,22 @@ class TestReceiptCreate:
 
         assert response.status_code == 201
         assert response.json()["status"] == ReceiptStatus.PENDING
+
+    def test_photo_url_points_to_private_view_not_media(self, client, promo_period):
+        user = UserFactory()
+        client.force_login(user)
+        buffer = io.BytesIO()
+        Image.new("RGB", (50, 50)).save(buffer, format="JPEG")
+        photo = SimpleUploadedFile("r.jpg", buffer.getvalue(), content_type="image/jpeg")
+
+        response = client.post(LIST_URL, data={**_payload(), "photo": photo})
+
+        assert response.status_code == 201
+        body = response.json()
+        assert body["photo"].startswith("/receipts/")
+        assert body["photo"].endswith("/photo/")
+        assert "/media/" not in body["photo"]
+        assert body["photo_thumb"].endswith("/photo/?size=thumb")
 
     def test_duplicate_from_another_user_returns_409(self, client, promo_period):
         user = UserFactory()

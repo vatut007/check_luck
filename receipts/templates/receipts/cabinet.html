@@ -46,7 +46,10 @@
           <tr data-receipt-id="{{ item.receipt.id }}" data-status="{{ item.receipt.status }}">
             <td class="cell cell--purchase" data-label="Дата покупки">
               {% if item.receipt.photo_thumb %}
-                <img src="{{ item.receipt.photo_thumb.url }}" alt="" class="receipt-thumb">
+                <img
+                  src="{% url 'receipts:receipt-photo' item.receipt.id %}?size=thumb"
+                  alt="" class="receipt-thumb"
+                >
               {% else %}
                 <img src="{% static 'receipts/icons/qr.svg' %}" alt="" class="receipt-thumb receipt-thumb--icon">
               {% endif %}

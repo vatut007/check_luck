@@ -8,6 +8,7 @@ validators.py на уровне API; сервисы отвечают за сос
 from django.db import IntegrityError, transaction
 
 from receipts.models import Receipt, ReceiptStatus, ReceiptStatusLog
+from receipts.photos import process_photo
 
 
 class DuplicateReceiptError(Exception):
@@ -33,12 +34,25 @@ def register_receipt(
 
     Возвращает (receipt, created): created=False — это повторная подача
     (HTTP 200), True — новый чек (HTTP 201).
+
+    Вызывающая сторона отвечает за photos.validate_photo() до вызова этой функции;
+    саму обработку (снятие EXIF, миниатюра) делает она сама — это не поле формы,
+    а производный артефакт, который в любом случае сохраняет только сервис.
     """
+    photo_thumb = None
+    if photo is not None:
+        photo, photo_thumb = process_photo(photo)
+
     with transaction.atomic():
         existing = Receipt.objects.select_for_update().filter(fn=fn, fd=fd, fp=fp).first()
         if existing is not None:
             return _resubmit_or_reject(
-                existing, user=user, purchased_at=purchased_at, amount=amount, photo=photo
+                existing,
+                user=user,
+                purchased_at=purchased_at,
+                amount=amount,
+                photo=photo,
+                photo_thumb=photo_thumb,
             )
 
         try:
@@ -50,6 +64,7 @@ def register_receipt(
                     purchased_at=purchased_at,
                     amount=amount,
                     photo=photo,
+                    photo_thumb=photo_thumb,
                     user=user,
                     status=ReceiptStatus.PENDING,
                 )
@@ -57,7 +72,12 @@ def register_receipt(
             # Гонка: кто-то успел вставить такой же чек между select и insert.
             existing = Receipt.objects.select_for_update().get(fn=fn, fd=fd, fp=fp)
             return _resubmit_or_reject(
-                existing, user=user, purchased_at=purchased_at, amount=amount, photo=photo
+                existing,
+                user=user,
+                purchased_at=purchased_at,
+                amount=amount,
+                photo=photo,
+                photo_thumb=photo_thumb,
             )
 
         ReceiptStatusLog.objects.create(
@@ -67,7 +87,7 @@ def register_receipt(
 
 
 def _resubmit_or_reject(
-    existing: Receipt, *, user, purchased_at, amount, photo
+    existing: Receipt, *, user, purchased_at, amount, photo, photo_thumb
 ) -> tuple[Receipt, bool]:
     if existing.user_id != user.id:
         raise DuplicateReceiptError("Этот чек уже зарегистрирован другим участником.")
@@ -82,10 +102,19 @@ def _resubmit_or_reject(
     existing.amount = amount
     if photo is not None:
         existing.photo = photo
+        existing.photo_thumb = photo_thumb
     existing.status = ReceiptStatus.PENDING
     existing.reject_reason = ""
     existing.save(
-        update_fields=["purchased_at", "amount", "photo", "status", "reject_reason", "updated_at"]
+        update_fields=[
+            "purchased_at",
+            "amount",
+            "photo",
+            "photo_thumb",
+            "status",
+            "reject_reason",
+            "updated_at",
+        ]
     )
     ReceiptStatusLog.objects.create(
         receipt=existing, from_status=from_status, to_status=ReceiptStatus.PENDING, actor=user

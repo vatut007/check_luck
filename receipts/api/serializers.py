@@ -1,11 +1,13 @@
 from decimal import Decimal
 
 from django.conf import settings
+from django.urls import reverse
 from rest_framework import serializers
 
 from receipts import validators
 from receipts.api.exceptions import Conflict
 from receipts.models import Receipt
+from receipts.photos import PhotoError, validate_photo
 from receipts.services import DuplicateReceiptError, register_receipt
 
 
@@ -76,6 +78,15 @@ class ReceiptSerializer(serializers.ModelSerializer):
     def get_prize_title(self, obj: Receipt) -> str:
         return obj.prize.title if obj.prize_id else ""
 
+    def to_representation(self, instance):
+        # photo/photo_thumb — обычные ImageField ради записи через multipart,
+        # но наружу отдаём только приватную вьюху, а не голый URL из /media/.
+        data = super().to_representation(instance)
+        photo_url = reverse("receipts:receipt-photo", args=[instance.pk])
+        data["photo"] = photo_url if instance.photo else None
+        data["photo_thumb"] = f"{photo_url}?size=thumb" if instance.photo_thumb else None
+        return data
+
     def validate_fn(self, value: str) -> str:
         try:
             return validators.validate_fn(value)
@@ -105,6 +116,13 @@ class ReceiptSerializer(serializers.ModelSerializer):
             return validators.validate_purchase_datetime(value, settings.PROMO)
         except validators.ValidationError as exc:
             raise serializers.ValidationError(str(exc)) from exc
+
+    def validate_photo(self, value):
+        try:
+            validate_photo(value, settings.PROMO.photo_max_mb)
+        except PhotoError as exc:
+            raise serializers.ValidationError(str(exc)) from exc
+        return value
 
     def create(self, validated_data):
         user = self.context["request"].user
