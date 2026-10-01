@@ -5,17 +5,15 @@ import io
 from django.core.files.base import ContentFile
 from PIL import Image
 
+from receipts.errors import DomainError
+
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
 THUMBNAIL_SIZE = (104, 104)
 _EXTENSIONS = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
 
 
-class PhotoError(Exception):
+class PhotoError(DomainError):
     """Фото не прошло проверку содержимого или размера."""
-
-    def __init__(self, message: str):
-        super().__init__(message)
-        self.message = message
 
 
 def validate_photo(file, max_mb: int) -> None:

@@ -7,13 +7,11 @@ JS её не дублирует: поле «Вставить строку из Q
 import datetime as dt
 from urllib.parse import parse_qsl
 
+from receipts.errors import DomainError
 
-class QrParseError(Exception):
+
+class QrParseError(DomainError):
     """Строка из QR не разобрана или описывает чек возврата."""
-
-    def __init__(self, message: str):
-        super().__init__(message)
-        self.message = message
 
 
 def _parse_purchased_at(raw: str) -> str:

@@ -21,7 +21,7 @@ class ReceiptStatusLogInline(admin.TabularInline):
     extra = 0
     can_delete = False
     fields = ["from_status", "to_status", "reason", "actor", "created_at"]
-    readonly_fields = fields
+    readonly_fields = list(fields)
 
     def has_add_permission(self, request, obj=None):
         return False

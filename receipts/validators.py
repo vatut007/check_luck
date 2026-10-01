@@ -9,9 +9,10 @@ import re
 from decimal import Decimal, InvalidOperation
 
 from config.promo import PromoConfig
+from receipts.errors import DomainError
 
 
-class ValidationError(Exception):
+class ValidationError(DomainError):
     """Ошибка валидации одного поля чека."""
 
 

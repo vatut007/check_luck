@@ -12,24 +12,17 @@ import secrets
 
 from django.db import IntegrityError, transaction
 
+from receipts.errors import DomainError
 from receipts.models import Draw, Receipt, ReceiptStatus, ReceiptStatusLog
 from receipts.photos import process_photo
 
 
-class DuplicateReceiptError(Exception):
+class DuplicateReceiptError(DomainError):
     """Чек с таким ФН+ФД+ФП уже зарегистрирован — см. docs/decisions/002."""
 
-    def __init__(self, message: str):
-        super().__init__(message)
-        self.message = message
 
-
-class InvalidTransitionError(Exception):
+class InvalidTransitionError(DomainError):
     """Запрошенный переход статуса чека недопустим."""
-
-    def __init__(self, message: str):
-        super().__init__(message)
-        self.message = message
 
 
 def register_receipt(
@@ -157,12 +150,8 @@ def moderate_receipt(*, receipt: Receipt, actor, new_status: str, reason: str = 
     return receipt
 
 
-class DrawError(Exception):
+class DrawError(DomainError):
     """Розыгрыш нельзя провести с переданными параметрами."""
-
-    def __init__(self, message: str):
-        super().__init__(message)
-        self.message = message
 
 
 def pick_winners(participants: list[list[int]], seed: str, count: int) -> list[int]:
