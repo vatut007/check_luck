@@ -236,12 +236,8 @@ class DrawAdminForm(forms.ModelForm):
         cleaned = super().clean()
         winners_count = cleaned.get("winners_count")
         if winners_count:
-            # changeform_view уже держит нас внутри transaction.atomic(), поэтому
-            # select_for_update() здесь удерживает ту же блокировку, что и run_draw() —
-            # к моменту save_model() набор участников не может измениться гонкой.
             eligible_users = (
-                Receipt.objects.select_for_update()
-                .filter(status=ReceiptStatus.ACCEPTED)
+                Receipt.objects.filter(status=ReceiptStatus.ACCEPTED)
                 .values_list("user_id", flat=True)
                 .distinct()
                 .count()
