@@ -7,10 +7,11 @@ from django.http import StreamingHttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 
-from receipts.models import Receipt, ReceiptStatus, ReceiptStatusLog
-from receipts.services import InvalidTransitionError, moderate_receipt
+from receipts.models import Draw, Receipt, ReceiptStatus, ReceiptStatusLog
+from receipts.services import InvalidTransitionError, moderate_receipt, run_draw
 
 STAFF_SELECTABLE_STATUSES = [ReceiptStatus.PENDING, ReceiptStatus.ACCEPTED, ReceiptStatus.REJECTED]
 
@@ -217,4 +218,89 @@ class ReceiptAdmin(admin.ModelAdmin):
             actor=request.user,
             new_status=obj.status,
             reason=obj.reject_reason,
+        )
+
+
+class DrawAdminForm(forms.ModelForm):
+    seed = forms.CharField(
+        required=False,
+        max_length=64,
+        help_text="Оставьте пустым — сгенерируется автоматически.",
+    )
+
+    class Meta:
+        model = Draw
+        fields = ["title", "winners_count", "seed"]
+
+    def clean(self):
+        cleaned = super().clean()
+        winners_count = cleaned.get("winners_count")
+        if winners_count:
+            eligible = Receipt.objects.filter(status=ReceiptStatus.ACCEPTED).count()
+            if eligible < winners_count:
+                raise forms.ValidationError(
+                    f"Недостаточно принятых чеков для розыгрыша: "
+                    f"{eligible} из {winners_count} нужных."
+                )
+        return cleaned
+
+
+DRAW_ADD_FIELDS = ["title", "winners_count", "seed"]
+DRAW_VIEW_ONLY_FIELDS = [
+    "participants_count",
+    "participants_hash",
+    "performed_by",
+    "performed_at",
+    "winners_list",
+]
+
+
+@admin.register(Draw)
+class DrawAdmin(admin.ModelAdmin):
+    form = DrawAdminForm
+    list_display = [
+        "id",
+        "title",
+        "winners_count",
+        "participants_count",
+        "performed_by",
+        "performed_at",
+    ]
+    readonly_fields = DRAW_VIEW_ONLY_FIELDS
+
+    def get_fields(self, request, obj=None):
+        if obj is None:
+            return DRAW_ADD_FIELDS
+        return DRAW_ADD_FIELDS + DRAW_VIEW_ONLY_FIELDS
+
+    def has_change_permission(self, request, obj=None):
+        # Проведённый розыгрыш не редактируется — страница открывается только для чтения.
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def save_model(self, request, obj, form, change):
+        draw = run_draw(
+            title=form.cleaned_data["title"],
+            winners_count=form.cleaned_data["winners_count"],
+            seed=form.cleaned_data["seed"],
+            actor=request.user,
+        )
+        obj.pk = draw.pk
+
+    @admin.display(description="Победители")
+    def winners_list(self, obj):
+        if not obj or not obj.pk:
+            return "—"
+        receipts = list(obj.winning_receipts.select_related("user"))
+        if not receipts:
+            return "—"
+        return format_html_join(
+            mark_safe("<br>"),
+            '<a href="{}">{} — {}</a>',
+            (
+                (reverse("admin:receipts_receipt_change", args=[r.pk]), str(r), str(r.user))
+                for r in receipts
+            ),
         )

@@ -5,9 +5,14 @@ Views и serializers сюда только обращаются — сами р�
 validators.py на уровне API; сервисы отвечают за состояние чека.
 """
 
+import hashlib
+import json
+import random
+import secrets
+
 from django.db import IntegrityError, transaction
 
-from receipts.models import Receipt, ReceiptStatus, ReceiptStatusLog
+from receipts.models import Draw, Receipt, ReceiptStatus, ReceiptStatusLog
 from receipts.photos import process_photo
 
 
@@ -150,3 +155,93 @@ def moderate_receipt(*, receipt: Receipt, actor, new_status: str, reason: str = 
             actor=actor,
         )
     return receipt
+
+
+class DrawError(Exception):
+    """Розыгрыш нельзя провести с переданными параметрами."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+
+
+def pick_winners(participants: list[list[int]], seed: str, count: int) -> list[int]:
+    """Детерминированный выбор победителей — один шанс на чек, один выигрыш на пользователя.
+
+    participants — список [receipt_id, user_id], отсортированный по receipt_id (порядок
+    должен быть детерминированным ещё до перемешивания). Та же пара (participants, seed)
+    всегда даёт тот же результат — это и проверяет management-команда verify_draw.
+    """
+    user_by_receipt = {receipt_id: user_id for receipt_id, user_id in participants}
+    shuffled = list(user_by_receipt.keys())
+    random.Random(seed).shuffle(shuffled)
+
+    winners: list[int] = []
+    winning_users: set[int] = set()
+    for receipt_id in shuffled:
+        if len(winners) >= count:
+            break
+        user_id = user_by_receipt[receipt_id]
+        if user_id in winning_users:
+            continue
+        winners.append(receipt_id)
+        winning_users.add(user_id)
+
+    return winners
+
+
+def participants_hash(participants: list[list[int]]) -> str:
+    raw = json.dumps(participants, separators=(",", ":"))
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def run_draw(*, title: str, winners_count: int, seed: str = "", actor) -> Draw:
+    """Проводит розыгрыш среди принятых чеков. Блокирует их на время розыгрыша
+    (select_for_update), чтобы модератор не мог что-то принять/отклонить посреди."""
+    title = title.strip()
+    if not title:
+        raise DrawError("Укажите название приза.")
+    if winners_count < 1:
+        raise DrawError("Число победителей должно быть не меньше 1.")
+
+    seed = seed.strip() or secrets.token_hex(16)
+
+    with transaction.atomic():
+        eligible = list(
+            Receipt.objects.select_for_update()
+            .filter(status=ReceiptStatus.ACCEPTED)
+            .order_by("id")
+            .values_list("id", "user_id")
+        )
+        if len(eligible) < winners_count:
+            raise DrawError(
+                f"Недостаточно принятых чеков для розыгрыша: "
+                f"{len(eligible)} из {winners_count} нужных."
+            )
+
+        participants = [[receipt_id, user_id] for receipt_id, user_id in eligible]
+        winner_ids = pick_winners(participants, seed, winners_count)
+
+        draw = Draw.objects.create(
+            title=title,
+            winners_count=winners_count,
+            seed=seed,
+            participants_count=len(participants),
+            participants=participants,
+            participants_hash=participants_hash(participants),
+            performed_by=actor,
+        )
+
+        for receipt in Receipt.objects.filter(id__in=winner_ids):
+            from_status = receipt.status
+            receipt.status = ReceiptStatus.WON
+            receipt.prize = draw
+            receipt.save(update_fields=["status", "prize", "updated_at"])
+            ReceiptStatusLog.objects.create(
+                receipt=receipt,
+                from_status=from_status,
+                to_status=ReceiptStatus.WON,
+                actor=actor,
+            )
+
+    return draw
