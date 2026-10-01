@@ -35,7 +35,9 @@ class Command(BaseCommand):
     help = "Создаёт демо-пользователей, чеки во всех статусах и проведённый розыгрыш."
 
     def handle(self, *args, **options):
-        moderator = self._get_or_create_user("moderator", "moderator", is_staff=True)
+        moderator = self._get_or_create_user(
+            "moderator", "moderator", is_staff=True, is_superuser=True
+        )
         demo = self._get_or_create_user("demo", "demo")
         stranger = self._get_or_create_user("stranger_demo", "stranger_demo")
 
@@ -50,14 +52,24 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("Демо-данные готовы."))
 
-    def _get_or_create_user(self, username, password, is_staff=False):
+    def _get_or_create_user(self, username, password, is_staff=False, is_superuser=False):
         user, created = User.objects.get_or_create(
             username=username,
-            defaults={"email": f"{username}@example.com", "is_staff": is_staff},
+            defaults={
+                "email": f"{username}@example.com",
+                "is_staff": is_staff,
+                "is_superuser": is_superuser,
+            },
         )
         if created:
             user.set_password(password)
             user.save(update_fields=["password"])
+        elif user.is_staff != is_staff or user.is_superuser != is_superuser:
+            # Чинит права на существующем пользователе, если команду запускали
+            # до того, как модератору стали нужны is_staff/is_superuser.
+            user.is_staff = is_staff
+            user.is_superuser = is_superuser
+            user.save(update_fields=["is_staff", "is_superuser"])
         return user
 
     def _seed_receipt(self, user, *, fn, amount, days_ago, status, reject_reason="", actor=None):

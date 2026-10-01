@@ -15,6 +15,7 @@ class TestSeedDemo:
 
         moderator = User.objects.get(username="moderator")
         assert moderator.is_staff
+        assert moderator.is_superuser
         assert moderator.check_password("moderator")
 
         demo = User.objects.get(username="demo")
